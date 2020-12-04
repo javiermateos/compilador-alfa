@@ -1,87 +1,82 @@
 ##
-# Compilador Alfa
+# Compilador alfa
 #
-# @file
+# @file Makefile
 # @version 0.1
-
-CC := gcc
-LEX := flex
-BISON := bison
-RM := rm -fv
-CFLAGS := -std=c99 -g -Iinclude -pedantic -Wall -Wextra
-BFLAGS := -d -y -v -g
-NFLAGS := -f elf32
-CCNASMFLAGS := -m32
-
-BDIR := .
+EDIR := .
 SDIR := src
 IDIR := include
 TDIR := test
 ODIR := obj
 NDIR := nasm
+FDIR := flex
+BDIR := bison
+LDIR := lib
 
-# Nota: $(patsubst PATTERN, REPLACEMENT, TEXT)
-EXES := alfa.c
-ALFALIB := $(ODIR)/alfalib.o
-DEPEND_FILES := $(wildcard $(ODIR)/*.d)
+NAME := alfa
+C_NAMES  := lex.yy.c y.tab.c simbolo.c tablaHash.c tablaSimbolos.c generacion.c main.c
 
-EXES := $(patsubst %,$(SDIR)/%,$(EXES))
-EOBJ := $(patsubst $(SDIR)/%.c,$(ODIR)/%.o,$(EXES))
-EBIN := $(patsubst $(SDIR)/%.c,$(BDIR)/%,$(EXES))
+CC := gcc
+CFLAGS := -std=c99 -g -Iinclude -pedantic -Wall -Wextra -D_POSIX_SOURCE
+BFLAGS := -d -y -v
+NFLAGS := -f elf32 -g
+CCNASMFLAGS := -m32
 
-FLEX_SOURCES := $(wildcard $(SDIR)/*.l)
-FLEX_GENERATED_FILES := $(FLEX_SOURCES:.l=.yy.c)
-FLEX_OBJ := $(patsubst $(SDIR)/%.c,$(ODIR)/%.o, $(FLEX_GENERATED_FILES))
+SFILES := c
+OFILES := o
+SOURCES := $(foreach sname, $(C_NAMES), $(SDIR)/$(sname))
+OBJECTS := $(patsubst $(SDIR)/%.$(SFILES), $(ODIR)/%.$(OFILES), $(SOURCES))
 
-BISON_SOURCES := $(wildcard $(SDIR)/*.y)
-BISON_GENERATED_FILES := $(BISON_SOURCES:.y=.tab.c)
-BISON_OBJ := $(patsubst $(SDIR)/%.c,$(ODIR)/%.o, $(BISON_GENERATED_FILES))
-BISON_HEADERS_ORIG := $(patsubst %.c,%.h, $(BISON_GENERATED_FILES))
-BISON_HEADERS := $(patsubst $(SDIR)/%,$(IDIR)/%, $(BISON_HEADERS_ORIG))
+# TFILES := alf
+# TSOURCES := $(wildcard $(TDIR)/*.alf)
 
-NASM_SOURCES := $(wildcard $(NDIR)/*.asm)
-NASM_OBJ := $(patsubst $(NDIR)/%.asm,$(ODIR)/%.o,$(NASM_SOURCES))
-NASM_BIN := $(patsubst %.nasm, %, $(NASM_SOURCES))
+EXE := $(EDIR)/$(NAME)
 
-SRCS := $(filter-out $(EXES) $(FLEX_GENERATED_FILES) $(BISON_GENERATED_FILES), $(wildcard $(SDIR)/*.c))
-SOBJ := $(patsubst $(SDIR)/%.c,$(ODIR)/%.o,$(SRCS) $(FLEX_GENERATED_FILES) $(BISON_GENERATED_FILES))
+.PHONY: all exe clean
 
-# Definicion de objetivos
-all: $(EBIN)
-nasm: $(NASM_BIN)
+all: exe
 
-# Reglas de compilacion
-$(SOBJ):$(ODIR)/%.o: $(SDIR)/%.c
-	$(CC) $(CFLAGS) -o $@ -c $<
+###############################################################################
+#   COMPILADOR                                                                 #
+###############################################################################
+exe: $(EXE)
 
-$(SDIR)/%.yy.c: $(SDIR)/%.l $(BISON_GENERATED_FILES)
-	$(LEX) -o $@ $<
+$(EXE): $(OBJECTS)
+	$(CC) $^ -o $@
 
-$(SDIR)/%.tab.c: $(SDIR)/%.y
-	$(BISON) $(BFLAGS) -o $@ $<
-	mv $(BISON_HEADERS_ORIG) $(IDIR)
+$(ODIR)/%$(OFILES): $(SDIR)/%$(SFILES)
+	@mkdir -p obj
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(EOBJ):$(ODIR)/%.o: $(SDIR)/%.c
-	$(CC) $(CFLAGS) -o $@ -c $<
+$(SDIR)/lex.yy.c: $(FDIR)/alfa.l $(SDIR)/y.tab.c
+	flex -o $@ $<
 
-$(EBIN):$(BDIR)/%: $(ODIR)/%.o $(SOBJ)
-	$(CC) - o $@ $^
+$(SDIR)/y.tab.c: $(BDIR)/alfa.y
+	bison --defines=$(IDIR)/y.tab.h -o $@ $(BFLAGS) $<
 
-$(NASM_OBJ):$(ODIR)/%.o: $(NDIR)/%.asm
-	$(NASM) $(NFLAGS) -o $@ $<
-
-$(NASM_BIN): $(BDIR)/%: $(ODIR)/%.o $(ALFALIB)
-	$(CC) $(CNASMFLAGS) -o $@ $^ $(CFLAGS)
+###############################################################################
+#   TEST                                                                      #
+###############################################################################
+# test:
+# 	@mkdir -p asm
+# 	for file in $(ls $(TDIR)/*.alf); do
+# 		t_title=$(basename -s .alf "$file")
+# 		./alfa "$file" $(NDIR)/"$t_title.asm"
+# 		nasm $(NFLAGS) $(NDIR)/"$t_title.asm"
+# 		$(CC) -o $(t_title) $(CCNASMFLAGS) "$t_title.$OFILES"
+# 		mv "$t_title.$OFILES" obj
+# 		# Si esto funciona y hay tiempo podría automatizarse las entradas y salidas
+# 	done
 
 clean:
-	@$(RM) $(SOBJ) $(EOBJ) $(EBIN)
-	@$(RM) $(FLEX_GENERATED_FILES) $(BISON_GENERATED_FILES)
-	@$(RM) $(BISON_HEADERS) $(BISON_HEADERS_ORIG)
-	@$(RM) $(NASM_OBJ) $(NASM_BIN)
-
+	rm -fv $(OBJECTS) $(EXE) $(DEPEND_FILES)
+	rm -fv $(SDIR)/lex.yy.c $(SDIR)/y.tab.c $(IDIR)/y.tab.h $(SDIR)/y.output
+	rm -fv $(NOBJECTS) $(NSOURCES)
+	rm -dfv $(NDIR) $(ODIR)
 
 # Deteccion de dependencias automatica, v2
 CFLAGS += -MMD
+DEPEND_FILES := $(wildcard $(ODIR)/*.d)
 -include $(DEPEND_FILES)
 
 # end

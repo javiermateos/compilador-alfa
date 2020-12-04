@@ -18,6 +18,7 @@
     int errmorf = 0;
 %}
 
+%option nodefault
 %option noyywrap
 %option nounput noinput
 
