@@ -19,7 +19,7 @@
 
     /* Declaracion de funciones */
     extern int yylex();
-    void yyerror(char* s);
+    void yyerror();
 
 %}
 
@@ -337,7 +337,7 @@ identificador: TOK_IDENTIFICADOR
 /******************************************************************************/
 /*  SECCION FUNCIONES DE USUARIO                                              */
 /******************************************************************************/
-void yyerror(char* s) {
+void yyerror() {
     if(errmorf != 1) {
         fprintf(stderr, "****Error sintáctico en [lin %d, col %d]\n", row, col);
     }
