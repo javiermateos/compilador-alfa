@@ -8,8 +8,8 @@
 struct s_simbolo {
   char *lexema;        /* identificador */
   CATEGORIA categoria; /* categoria */
-  TIPO tipo;           /* tipo */
-  CLASE clase;         /* clase */
+  TIPO tipo;           /* tipo del identificador o tipo devuelto si funcion*/
+  CLASE clase;         /* clase del identificador */
   int adicional1; /* valor si escalar, longitud si vector, numero de parametros
                      si funcion */
   int adicional2; /* posicion en llamada a funcion si parametro, posicion de

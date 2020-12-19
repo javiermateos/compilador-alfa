@@ -8,14 +8,14 @@
     #include <stdlib.h>
 
     #include "y.tab.h"
+    #include "alfa.h"
 
     /* Definicion de macros */
-    #define TAM_MAX_IDENTIFICADOR 75
 
     /* Definicion de variables */
     int row = 1;
     int col = 1;
-    int errmorf = 0;
+    int err_morf = 0;
 %}
 
 %option nodefault
@@ -80,14 +80,15 @@ return  {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); return TOK_RETURN;}
 
  /* Identificadores */
 {LETRA}({LETRA}|{COLA_IDENTIFICADOR})*  {
-                                            if(yyleng > TAM_MAX_IDENTIFICADOR) {
+                                            if(yyleng > MAX_LONG_ID) {
                                                 col+=1;
                                                 fprintf(stderr, "****Error en [lin %d, col %d]: Identificador demasiado largo (%s)\n", row, col, yytext);
-                                                errmorf=1;
+                                                err_morf=1;
                                                 return TOK_ERROR;
                                             }
                                             col+=yyleng;
                                             fprintf(yyout, ";D:\t%s\n", yytext);
+                                            strcpy(yylval.atributos.lexema, yytext);
                                             return TOK_IDENTIFICADOR;
                                         }
 
@@ -95,12 +96,12 @@ return  {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); return TOK_RETURN;}
 
 true    {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); return TOK_TRUE;}
 false   {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); return TOK_FALSE;}
-{NUMERO}    {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); return TOK_CONSTANTE_ENTERA;}
+{NUMERO}    {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); yylval.atributos.valor_entero=atoi(yytext); return TOK_CONSTANTE_ENTERA;}
 
  /* Errores */
 .   {
         col+=yyleng;
-        errmorf=1;
+        err_morf=1;
         fprintf(stderr, "****Error en [lin %d, col %d]: Simbolo no permitido (%s)\n", row, col, yytext);
         return TOK_ERROR;
     }

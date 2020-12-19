@@ -8,22 +8,32 @@
     #include <stdlib.h>
 
     #include "y.tab.h"
+    #include "alfa.h"
+    #include "tablaSimbolos.h"
 
     /* Definicion de macros */
 
-    /* Declaracion de variables */
+    /* Declaracion de variables externas*/
     extern int row;
     extern int col;
     extern FILE* yyout;
-    extern int errmorf;
+    extern int err_morf;
+
+    /* Declaracion de variables locales */
+    int tipo_actual;
+    int clase_actual;
+
+    tabla_simbolos* tabla;
 
     /* Declaracion de funciones */
     extern int yylex();
-    void yyerror();
-
+    void yyerror(char* s);
 %}
 
  /* Definicion variable yylval */
+%union {
+  tipo_atributos atributos;
+}
 
  /* Definicion simbolos terminales */
 %token TOK_MAIN TOK_INT TOK_BOOLEAN TOK_ARRAY TOK_FUNCTION TOK_IF
@@ -32,14 +42,20 @@
 %token TOK_AND TOK_OR TOK_NOT TOK_IGUAL TOK_DISTINTO TOK_MENORIGUAL
 %token TOK_MAYORIGUAL
 
-%token TOK_IDENTIFICADOR
-
 %token TOK_TRUE TOK_FALSE
-%token TOK_CONSTANTE_ENTERA
+%token <atributos> TOK_IDENTIFICADOR TOK_CONSTANTE_ENTERA
 
 %token TOK_ERROR
 
  /* Declaracion del tipo de los simbolos no terminales */
+%type <atributos> condicional
+%type <atributos> comparacion
+%type <atributos> elemento_vector
+%type <atributos> exp
+%type <atributos> constante
+%type <atributos> constante_entera
+%type <atributos> constante_logica
+%type <atributos> identificador
 
  /* Definicion axioma de la gramatica */
 
@@ -53,9 +69,15 @@
 /******************************************************************************/
 
 %%
-programa: TOK_MAIN '{' declaraciones funciones sentencias '}'
+programa: inicioTabla TOK_MAIN '{' declaraciones funciones sentencias '}'
 {
     fprintf(yyout, ";R1:\t<programa> ::= main { <declaraciones> <funciones> <sentencias> }\n");
+    ts_free(tabla);
+};
+
+inicioTabla: /* vacio */ 
+{
+  tabla = ts_crear();
 };
 
 declaraciones: declaracion
@@ -73,10 +95,13 @@ declaracion: clase identificadores ';'
 
 clase: clase_escalar
 {
+    clase_actual =  ESCALAR;
     fprintf(yyout, ";R5:\t<clase> ::= <clase_escalar>\n");
-} | clase_vector
+} 
+  | clase_vector
 {
-    fprintf(yyout, ";R6:\t<clase> ::= <clase_vector>\n");
+    clase_actual = VECTOR;
+    fprintf(yyout, ";R7:\t<clase> ::= <clase_vector>\n");
 };
 
 clase_escalar: tipo
@@ -86,11 +111,14 @@ clase_escalar: tipo
 
 tipo: TOK_INT
 {
+    tipo_actual = ENTERO;
     fprintf(yyout, ";R10:\t<tipo> ::= int\n");
-} | TOK_BOOLEAN
+} 
+  | TOK_BOOLEAN
 {
+    tipo_actual = BOOLEANO;
     fprintf(yyout, ";R11:\t<tipo> ::= boolean\n");
-}
+};
 
 clase_vector: TOK_ARRAY tipo '[' constante_entera ']'
 {
@@ -329,16 +357,23 @@ constante_entera: TOK_CONSTANTE_ENTERA
 
 identificador: TOK_IDENTIFICADOR
 {
+    if (!ts_search(tabla, $1.lexema)) {
+      yyerror("Declaracion duplicada.");
+    }
     fprintf(yyout, ";R108:\t<identificador> ::= TOK_IDENTIFICADOR\n");
-}
+};
 
 %%
 
 /******************************************************************************/
 /*  SECCION FUNCIONES DE USUARIO                                              */
 /******************************************************************************/
-void yyerror() {
-    if(errmorf != 1) {
-        fprintf(stderr, "****Error sintáctico en [lin %d, col %d]\n", row, col);
+void yyerror(char *s) {
+    if (!s) {
+      fprintf(stderr, "****Error semantico en lin %d: %s\n", row, s);
     }
+    else if (!err_morf) {
+      fprintf(stderr, "****Error sintáctico en [lin %d, col %d]\n", row, col);
+    }
+    ts_free(tabla);
 }

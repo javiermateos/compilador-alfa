@@ -41,7 +41,8 @@ void ts_free(tabla_simbolos *p_ts) {
   free(p_ts);
 }
 
-STATUS ts_insert(tabla_simbolos *p_ts, const char *lexema, int n) {
+STATUS ts_insert(tabla_simbolos *p_ts, const char *lexema,
+                  CATEGORIA cat, TIPO t, CLASE cl, int adic1, int adic2) {
   HashTable *ht = NULL;
   simbolo *s = NULL;
 
@@ -54,7 +55,7 @@ STATUS ts_insert(tabla_simbolos *p_ts, const char *lexema, int n) {
     ht = p_ts->tabla_global;
   }
 
-  s = crear_simbolo(lexema, VARIABLE, ENTERO, ESCALAR, n, 0);
+  s = crear_simbolo(lexema, cat, t, cl, adic1, adic2);
   if (!s) {
     return ERR;
   }
@@ -84,7 +85,7 @@ simbolo *ts_search(tabla_simbolos *p_ts, const char *lexema) {
   return ht_search(p_ts->tabla_global, lexema);
 }
 
-STATUS ts_open_scope(tabla_simbolos *p_ts, const char *lexema, int n) {
+STATUS ts_open_scope(tabla_simbolos *p_ts, const char *lexema, TIPO t, int adic1, int adic2) {
 
   simbolo *s = NULL;
 
@@ -102,7 +103,7 @@ STATUS ts_open_scope(tabla_simbolos *p_ts, const char *lexema, int n) {
     return ERR;
   }
 
-  s = crear_simbolo(lexema, VARIABLE, ENTERO, ESCALAR, n, 0);
+  s = crear_simbolo(lexema, FUNCION, t, ESCALAR, adic1, adic2);
   if (!s) {
     return ERR;
   }
@@ -114,7 +115,7 @@ STATUS ts_open_scope(tabla_simbolos *p_ts, const char *lexema, int n) {
     return ERR;
   }
 
-  s = crear_simbolo(lexema, VARIABLE, ENTERO, ESCALAR, n, 0);
+  s = crear_simbolo(lexema, FUNCION, t, ESCALAR, adic1, adic2);
   if (!s) {
     return ERR;
   }
