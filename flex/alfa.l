@@ -7,8 +7,8 @@
     #include <stdio.h>
     #include <stdlib.h>
 
-    #include "y.tab.h"
     #include "alfa.h"
+    #include "y.tab.h"
 
     /* Definicion de macros */
 

@@ -14,11 +14,11 @@ BDIR := bison
 LDIR := lib
 
 NAME := alfa
-C_NAMES  := lex.yy.c y.tab.c simbolo.c tablaHash.c tablaSimbolos.c generacion.c main.c
+C_NAMES  := y.tab.c lex.yy.c simbolo.c tablaHash.c tablaSimbolos.c generacion.c main.c
 
 CC := gcc
-CFLAGS := -std=c99 -g -Iinclude -pedantic -Wall -Wextra 
-BFLAGS := -d -y -v
+CFLAGS := -std=c99 -g -Iinclude -pedantic -Wall -Wextra
+BFLAGS := -d -y -v -Wno-other 
 NFLAGS := -f elf32 -g
 CCNASMFLAGS := -m32
 
@@ -27,14 +27,11 @@ OFILES := o
 SOURCES := $(foreach sname, $(C_NAMES), $(SDIR)/$(sname))
 OBJECTS := $(patsubst $(SDIR)/%.$(SFILES), $(ODIR)/%.$(OFILES), $(SOURCES))
 
-# TFILES := alf
-# TSOURCES := $(wildcard $(TDIR)/*.alf)
-
 EXE := $(EDIR)/$(NAME)
 
 .PHONY: all exe test clean
 
-all: exe test
+all: exe
 
 ###############################################################################
 #   COMPILADOR                                                                 #
@@ -48,11 +45,11 @@ $(ODIR)/%$(OFILES): $(SDIR)/%$(SFILES)
 	@mkdir -p obj
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(SDIR)/lex.yy.c: $(FDIR)/alfa.l $(SDIR)/y.tab.c include/alfa.h
+$(SDIR)/lex.yy.c: $(FDIR)/alfa.l $(SDIR)/y.tab.c
 	flex -o $@ $<
 
 $(SDIR)/y.tab.c: $(BDIR)/alfa.y
-	bison --defines=$(IDIR)/y.tab.h -o $@ $(BFLAGS) $<
+	bison $(BFLAGS) --defines=$(IDIR)/y.tab.h -o $@ $<
 
 ###############################################################################
 #   TEST                                                                      #
@@ -76,8 +73,8 @@ clean:
 	rm -rfv $(NDIR) $(ODIR) $(TDIR)/compilados
 
 # Deteccion de dependencias automatica
-CFLAGS += -MMD
-DEPEND_FILES := $(wildcard $(ODIR)/*.d)
--include $(DEPEND_FILES)
+# CFLAGS += -MMD
+# DEPEND_FILES := $(wildcard $(ODIR)/*.d)
+# -include $(DEPEND_FILES)
 
 # end

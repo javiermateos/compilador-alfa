@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -16,6 +15,30 @@ struct s_simbolo {
                      declaracion si variable local de funcion, numero de
                      variables locales si funcion */
 };
+
+char* get_simbolo_lexema(simbolo* p_s) {
+  return p_s->lexema;
+}
+
+CATEGORIA get_simbolo_categoria(simbolo* p_s) {
+  return p_s->categoria;
+}
+
+TIPO get_simbolo_tipo(simbolo* p_s) {
+  return p_s->tipo;
+}
+
+CLASE get_simbolo_clase(simbolo* p_s) {
+  return p_s->clase;
+}
+
+int get_simbolo_adicional1(simbolo* p_s) {
+  return p_s->adicional1;
+}
+
+int get_simbolo_adicional2(simbolo* p_s) {
+  return p_s->adicional2;
+}
 
 simbolo *crear_simbolo(const char *lexema, CATEGORIA categoria, TIPO tipo,
                        CLASE clase, int adic1, int adic2) {
@@ -40,6 +63,15 @@ simbolo *crear_simbolo(const char *lexema, CATEGORIA categoria, TIPO tipo,
   strcpy(p_simbolo->lexema, lexema);
 
   return p_simbolo;
+}
+
+simbolo *copy_simbolo(simbolo* p_simbolo) {
+  simbolo* copy = NULL;
+
+  copy = crear_simbolo(p_simbolo->lexema, p_simbolo->categoria, p_simbolo->tipo, 
+      p_simbolo->clase, p_simbolo->adicional1, p_simbolo->adicional2);
+
+  return copy;
 }
 
 void liberar_simbolo(simbolo *simbolo) {

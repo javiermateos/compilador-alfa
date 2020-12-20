@@ -1,6 +1,7 @@
 #ifndef __TABLASIMBOLOS_H_
 #define __TABLASIMBOLOS_H_
 
+#include "tablaHash.h"
 #include "simbolo.h"
 #include "tipos.h"
 
@@ -14,5 +15,6 @@ STATUS ts_insert(tabla_simbolos *p_ts, const char* lexema, CATEGORIA cat, TIPO t
 simbolo* ts_search(tabla_simbolos *p_ts, const char* lexema);
 STATUS ts_open_scope(tabla_simbolos *p_ts, const char* lexema, TIPO t, int adic1, int adic2);
 STATUS ts_close_scope(tabla_simbolos *p_ts);
+LinkedList* ts_get_simbolos(tabla_simbolos *p_ts);
 
 #endif

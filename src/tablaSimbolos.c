@@ -68,8 +68,8 @@ STATUS ts_insert(tabla_simbolos *p_ts, const char *lexema,
   return OK;
 }
 
-simbolo *ts_search(tabla_simbolos *p_ts, const char *lexema) {
-  simbolo *ret = NULL;
+simbolo* ts_search(tabla_simbolos *p_ts, const char *lexema) {
+  Ht_item* ret = NULL;
 
   if (!p_ts || !lexema) {
     return NULL;
@@ -77,12 +77,15 @@ simbolo *ts_search(tabla_simbolos *p_ts, const char *lexema) {
 
   if (p_ts->tabla_local) {
     ret = ht_search(p_ts->tabla_local, lexema);
-    if (ret) {
-      return ret;
-    }
+  } else {
+    ret = ht_search(p_ts->tabla_global, lexema);
   }
 
-  return ht_search(p_ts->tabla_global, lexema);
+  if (!ret) {
+    return NULL;
+  }
+
+  return get_Htitem_value(ret);
 }
 
 STATUS ts_open_scope(tabla_simbolos *p_ts, const char *lexema, TIPO t, int adic1, int adic2) {
@@ -93,10 +96,9 @@ STATUS ts_open_scope(tabla_simbolos *p_ts, const char *lexema, TIPO t, int adic1
     return ERR;
   }
 
-  /* No es necesario por el enunciado de la P4 */
-  /* if (p_ts->tabla_local) { */
-  /*   return ERR; */
-  /* } */
+  if (p_ts->tabla_local) {
+    return ERR;
+  }
 
   p_ts->tabla_local = ht_create(TH_SIZE);
   if (!p_ts->tabla_local) {
@@ -144,4 +146,13 @@ STATUS ts_close_scope(tabla_simbolos *p_ts) {
   p_ts->tabla_local = NULL;
 
   return OK;
+}
+
+LinkedList* ts_get_simbolos(tabla_simbolos *p_ts) {
+
+  if (p_ts->tabla_local) {
+    return get_Htitems(p_ts->tabla_local);
+  }
+
+  return get_Htitems(p_ts->tabla_global);
 }

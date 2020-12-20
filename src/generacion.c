@@ -317,7 +317,7 @@ void leer(FILE *fpasm, char *nombre, int tipo)
     {
         fprintf(fpasm, "call scan_int\n");
     }
-    else if (tipo == BOOLEANO)
+    else if (tipo == BOOLEAN)
     {
         fprintf(fpasm, "call scan_boolean\n");
     }
@@ -332,7 +332,7 @@ void escribir(FILE *fpasm, int es_variable, int tipo)
     {
         fprintf(fpasm, "call print_int\n");
     }
-    else if (tipo == BOOLEANO)
+    else if (tipo == BOOLEAN)
     {
         fprintf(fpasm, "call print_boolean\n");
     }

@@ -7,28 +7,36 @@
     #include <stdio.h>
     #include <stdlib.h>
 
-    #include "y.tab.h"
     #include "alfa.h"
+    #include "tipos.h"
     #include "tablaSimbolos.h"
+    #include "generacion.h"
 
+    #include "y.tab.h"
     /* Definicion de macros */
 
     /* Declaracion de variables externas*/
     extern int row;
     extern int col;
     extern FILE* yyout;
+    extern FILE* yyasm;
     extern int err_morf;
 
     /* Declaracion de variables locales */
-    int tipo_actual;
-    int clase_actual;
+    TIPO tipo_actual;
+    CLASE clase_actual;
+    CATEGORIA categoria_actual;
+    int adic1, adic2;
 
     tabla_simbolos* tabla;
+
+    char err[160];
 
     /* Declaracion de funciones */
     extern int yylex();
     void yyerror(char* s);
 %}
+
 
  /* Definicion variable yylval */
 %union {
@@ -69,16 +77,52 @@
 /******************************************************************************/
 
 %%
-programa: inicioTabla TOK_MAIN '{' declaraciones funciones sentencias '}'
+programa: inicioTabla TOK_MAIN '{' declaraciones escritura1 funciones escritura2 sentencias '}'
 {
-    fprintf(yyout, ";R1:\t<programa> ::= main { <declaraciones> <funciones> <sentencias> }\n");
+    /* Llamada a funciones para escribir el fin del fichero ensamblador */
+    escribir_fin(yyasm);
     ts_free(tabla);
+    fprintf(yyout, ";R1:\t<programa> ::= main { <declaraciones> <funciones> <sentencias> }\n");
 };
 
 inicioTabla: /* vacio */ 
 {
   tabla = ts_crear();
 };
+
+escritura1: /* vacio */
+{
+  /* Llamada a funciones para escribir la seccion data con los mensajes generales y
+  la tabla de simbolos, asi como todo lo necesario para que lo siguiente ha escribir 
+  en el fichero ensamblador sea la sentencia main: */
+  escribir_subseccion_data(yyasm);
+  escribir_cabecera_bss(yyasm);
+
+  LinkedList *p_lista_simbolos= NULL;
+  Ht_item* p_item = NULL;
+  simbolo* p_s = NULL;
+
+  for (p_lista_simbolos = ts_get_simbolos(tabla); 
+        p_lista_simbolos != NULL; 
+        p_lista_simbolos = get_LinkedList_next(p_lista_simbolos)) {
+    p_item = get_LinkedList_item(p_lista_simbolos); 
+    p_s = get_Htitem_value(p_item);
+    if (get_simbolo_clase(p_s) == ESCALAR) {
+      declarar_variable(yyasm, get_simbolo_lexema(p_s), get_simbolo_tipo(p_s), 1);
+    } else {
+      declarar_variable(yyasm, get_simbolo_lexema(p_s), get_simbolo_tipo(p_s), 
+                        get_simbolo_adicional1(p_s));
+    }
+  }
+
+  escribir_segmento_codigo(yyasm);
+}
+
+escritura2: /* vacio */
+{
+  /* Aqui ya puede llamarse a la funcion que escribe inicio main */
+  escribir_inicio_main(yyasm);
+}
 
 declaraciones: declaracion
 {
@@ -116,8 +160,7 @@ tipo: TOK_INT
 } 
   | TOK_BOOLEAN
 {
-    tipo_actual = BOOLEANO;
-    fprintf(yyout, ";R11:\t<tipo> ::= boolean\n");
+    tipo_actual = BOOLEAN; fprintf(yyout, ";R11:\t<tipo> ::= boolean\n");
 };
 
 clase_vector: TOK_ARRAY tipo '[' constante_entera ']'
@@ -141,7 +184,7 @@ funciones: funcion funciones
     fprintf(yyout, ";R21:\t<funciones> ::= \n");
 };
 
-funcion: TOK_FUNCTION tipo identificador '(' parametros_funcion ')' '{' declaraciones_funcion sentencias '}'
+funcion: TOK_FUNCTION tipo TOK_IDENTIFICADOR '(' parametros_funcion ')' '{' declaraciones_funcion sentencias '}'
 {
     fprintf(yyout, ";R22:\t<funcion> ::= function <tipo> <identificador> ( <parametros_funcion> ) { <declaraciones_funcion> <sentencias> }");
 };
@@ -162,7 +205,7 @@ resto_parametros_funcion: ';' parametro_funcion resto_parametros_funcion
     fprintf(yyout, ";R26:\t<resto_parametros_funcion> ::= \n");
 };
 
-parametro_funcion: tipo identificador
+parametro_funcion: tipo TOK_IDENTIFICADOR
 {
     fprintf(yyout, ";R27:\t<parametro_funcion> ::= <tipo> <identificador>\n");
 };
@@ -213,17 +256,33 @@ bloque: condicional
     fprintf(yyout, ";R41:\t<bloque> ::= <bucle>\n");
 };
 
-asignacion: identificador '=' exp
+asignacion: TOK_IDENTIFICADOR '=' exp
 {
-    fprintf(yyout, ";R43:\t<asignacion> ::= <identificador> = <exp>\n");
-} | elemento_vector '=' exp
+  simbolo* p_s = NULL;
+  
+  p_s = ts_search(tabla, $1.lexema);
+  if (!p_s) {
+    sprintf(err, "Acceso a variable no declarada %s", $1.lexema);
+    yyerror(err);
+    return -1;
+  } else if (categoria_actual == FUNCION || clase_actual == VECTOR ||
+              get_simbolo_tipo(p_s) != $3.tipo) {
+    yyerror("Asignacion incompatible");
+    return -1;
+  }
+
+  asignar(yyasm, $1.lexema, $3.es_direccion);
+
+  fprintf(yyout, ";R43:\t<asignacion> ::= <identificador> = <exp>\n");
+} 
+  | elemento_vector '=' exp
 {
-    fprintf(yyout, ";R44:\t<asignacion> ::= <elemento_vector> = <exp>\n");
+  fprintf(yyout, ";R44:\t<asignacion> ::= <elemento_vector> = <exp>\n");
 };
 
-elemento_vector: identificador '[' exp ']'
+elemento_vector: TOK_IDENTIFICADOR '[' exp ']'
 {
-    fprintf(yyout, ";R48:\t<elemento_vector> ::= <identificador> [ <expr> ]\n");
+  fprintf(yyout, ";R48:\t<elemento_vector> ::= <identificador> [ <expr> ]\n");
 };
 
 condicional: TOK_IF '(' exp ')' '{' sentencias '}'
@@ -239,14 +298,16 @@ bucle: TOK_WHILE '(' exp ')' '{' sentencias '}'
     fprintf(yyout, ";R52:\t<bucle> ::= while ( <exp> ) { <sentencias> }\n");
 };
 
-lectura: TOK_SCANF identificador
+lectura: TOK_SCANF TOK_IDENTIFICADOR
 {
     fprintf(yyout, ";R54:\t<lectura> ::= scanf <identificador>\n");
 };
 
 escritura: TOK_PRINTF exp
 {
-    fprintf(yyout, ";R56:\t<escritura> ::= printf <exp>\n");
+  escribir(yyasm, $2.es_direccion, $2.tipo);
+
+  fprintf(yyout, ";R56:\t<escritura> ::= printf <exp>\n");
 };
 
 retorno_funcion: TOK_RETURN exp
@@ -278,12 +339,32 @@ exp: exp '+' exp
 } | TOK_NOT exp
 {
     fprintf(yyout, ";R79:\t<exp> ::= ! <exp>\n");
-} | identificador
+} | TOK_IDENTIFICADOR
 {
-    fprintf(yyout, ";R80:\t<exp> ::= <identificador>\n");
+  simbolo* p_s = NULL;
+  
+  p_s = ts_search(tabla, $1.lexema);
+  if (!p_s) {
+    sprintf(err, "Acceso a variable no declarada %s", $1.lexema);
+    yyerror(err);
+    return -1;
+  } else if (get_simbolo_categoria(p_s) == FUNCION ||
+              get_simbolo_clase(p_s) == VECTOR) {
+    yyerror("Error sin descripcion.");
+    return -1;
+  }
+
+  $$.tipo = get_simbolo_tipo(p_s);
+  $$.es_direccion = 1; /* Es una variable */
+
+  escribir_operando(yyasm, $1.lexema, $$.es_direccion);
+
+  fprintf(yyout, ";R80:\t<exp> ::= <identificador>\n");
 } | constante
 {
-    fprintf(yyout, ";R81:\t<exp> ::= <constante>\n");
+  $$.tipo = $1.tipo;
+  $$.es_direccion = $1.es_direccion;
+  fprintf(yyout, ";R81:\t<exp> ::= <constante>\n");
 } | '(' exp ')'
 {
     fprintf(yyout, ";R82:\t<exp> ::= ( exp )\n");
@@ -293,7 +374,7 @@ exp: exp '+' exp
 } | elemento_vector
 {
     fprintf(yyout, ";R85\t<exp> ::= <elemento_vector>\n");
-} | identificador '(' lista_expresiones ')'
+} | TOK_IDENTIFICADOR '(' lista_expresiones ')'
 {
     fprintf(yyout, ";R88\t<exp> ::= <identificador> ( <lista_expresiones> )\n");
 };
@@ -339,7 +420,9 @@ constante: constante_logica
     fprintf(yyout, ";R99:\t<constante> ::= <constante_logica>\n");
 } | constante_entera
 {
-    fprintf(yyout, ";R100:\t<constante> ::= <constante_entera>\n");
+  $$.tipo = $1.tipo;
+  $$.es_direccion = $1.es_direccion;
+  fprintf(yyout, ";R100:\t<constante> ::= <constante_entera>\n");
 };
 
 constante_logica: TOK_TRUE
@@ -352,13 +435,25 @@ constante_logica: TOK_TRUE
 
 constante_entera: TOK_CONSTANTE_ENTERA
 {
-    fprintf(yyout, ";R104:\t<constante_entera> ::= TOK_CONSTANTE_ENTERA\n");
+  char valor[10];
+
+  $$.tipo = ENTERO;
+  $$.valor_entero = $1.valor_entero;
+  $$.es_direccion = 0;
+
+  sprintf(valor, "%d", $1.valor_entero);
+  escribir_operando(yyasm, valor, 0);
+
+  fprintf(yyout, ";R104:\t<constante_entera> ::= TOK_CONSTANTE_ENTERA\n");
 };
 
 identificador: TOK_IDENTIFICADOR
 {
-    if (!ts_search(tabla, $1.lexema)) {
+    if (ts_search(tabla, $1.lexema)) {
       yyerror("Declaracion duplicada.");
+      return -1;
+    } else {
+      ts_insert(tabla, $1.lexema, categoria_actual, tipo_actual, clase_actual, adic1, adic2);
     }
     fprintf(yyout, ";R108:\t<identificador> ::= TOK_IDENTIFICADOR\n");
 };
@@ -369,7 +464,7 @@ identificador: TOK_IDENTIFICADOR
 /*  SECCION FUNCIONES DE USUARIO                                              */
 /******************************************************************************/
 void yyerror(char *s) {
-    if (!s) {
+    if (s) {
       fprintf(stderr, "****Error semantico en lin %d: %s\n", row, s);
     }
     else if (!err_morf) {

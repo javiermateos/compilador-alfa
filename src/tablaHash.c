@@ -12,8 +12,6 @@ struct s_Ht_item {
   simbolo *value;
 };
 
-typedef struct s_LinkedList LinkedList;
-
 struct s_LinkedList {
   Ht_item *item;
   LinkedList *next;
@@ -100,6 +98,14 @@ static LinkedList *linkedlist_insert(LinkedList *list, Ht_item *item) {
 /*   return it; */
 /* } */
 
+LinkedList* get_LinkedList_next(LinkedList *list) {
+  return list->next;
+}
+
+Ht_item* get_LinkedList_item(LinkedList *list) {
+  return list->item;
+}
+
 static void free_linkedlist(LinkedList *list) {
   LinkedList *temp = list;
   while (list) {
@@ -157,6 +163,21 @@ void item_free(Ht_item *item) {
   free(item);
 }
 
+Ht_item* item_copy(Ht_item *item) {
+
+  Ht_item* copy = NULL;
+  simbolo* simbolo_copy = NULL;
+
+  simbolo_copy = copy_simbolo(item->value);
+  copy = item_create(item->key, simbolo_copy);
+
+  return copy;
+}
+
+simbolo* get_Htitem_value(Ht_item *ht) {
+  return ht->value;
+}
+
 HashTable *ht_create(int size) {
   int i;
   HashTable *table = NULL;
@@ -188,7 +209,7 @@ void ht_free(HashTable *table) {
 }
 
 void handle_collision(HashTable *table, unsigned long index, Ht_item *item) {
-  LinkedList *head = NULL;
+  LinkedList *head = table->overflow_buckets[index];
 
   if (head == NULL) {
     head = allocate_list();
@@ -199,7 +220,7 @@ void handle_collision(HashTable *table, unsigned long index, Ht_item *item) {
   }
 }
 
-simbolo *ht_search(HashTable *table, const char *key) {
+Ht_item* ht_search(HashTable *table, const char *key) {
   int index;
   Ht_item *item = NULL;
   LinkedList *head = NULL;
@@ -210,7 +231,7 @@ simbolo *ht_search(HashTable *table, const char *key) {
 
   while (item != NULL) {
     if (strcmp(item->key, key) == 0)
-      return item->value;
+      return item;
     if (head == NULL)
       return NULL;
     item = head->item;
@@ -301,4 +322,30 @@ void ht_delete(HashTable *table, const char *key) {
       curr = curr->next;
     }
   }
+}
+
+LinkedList* get_Htitems(HashTable *table) {
+
+  int i;
+  LinkedList *head = NULL;
+  Ht_item* copy = NULL;
+
+  for (i = 0; i < table->size; i++) {
+    if (table->items[i]) {
+      if (!head) {
+        head = allocate_list();
+        head->item = item_copy(table->items[i]);
+        head->next = NULL;
+      } else {
+        copy = item_copy(table->items[i]);
+        head = linkedlist_insert(head, copy);
+      }
+      if (table->overflow_buckets[i]) {
+        copy = item_copy(table->overflow_buckets[i]->item);
+        head = linkedlist_insert(head, copy);
+      }
+    }
+  }
+
+  return head;
 }
