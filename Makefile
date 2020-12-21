@@ -55,22 +55,14 @@ $(SDIR)/y.tab.c: $(BDIR)/alfa.y
 #   TEST                                                                      #
 ###############################################################################
 test:
-	@mkdir -p asm
-	for file in $(ls $(TDIR)/*.alf); do
-		t_title=$(basename -s .alf "$file")
-		./alfa "$file" $(NDIR)/"$t_title.asm"
-		nasm $(NFLAGS) $(NDIR)/"$t_title.asm"
-		$(CC) -o $(t_title) $(CCNASMFLAGS) "$t_title.$OFILES" lib/alfalib.o
-		rm -fv "$t_title.$OFILES"
-		mv $(t_title) test/compilados
-		cp test/*.input test/compilados
-		cp test/*.output test/compilados
-	done
+	@mkdir -p $(NDIR)
+	bash compile.sh
 
 clean:
 	rm -fv $(OBJECTS) $(EXE) $(DEPEND_FILES)
 	rm -fv $(SDIR)/lex.yy.c $(SDIR)/y.tab.c $(IDIR)/y.tab.h $(SDIR)/y.output
 	rm -rfv $(NDIR) $(ODIR) $(TDIR)/compilados
+	rm -fv output.txt
 
 # Deteccion de dependencias automatica
 CFLAGS += -MMD

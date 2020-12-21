@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
   }
 
   if (argv[3] != NULL) {
-    yyout = fopen(argv[3], "w");
+    yyout = fopen(argv[3], "a");
     if (yyin == NULL) {
       fprintf(stderr, "Fallo de fopen() en el archivo %s", __FILE__);
       exit(EXIT_FAILURE);
