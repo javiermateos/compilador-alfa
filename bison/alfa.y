@@ -301,12 +301,17 @@ parametro_funcion: tipo idpf
 
 idpf: TOK_IDENTIFICADOR
 {
+  STATUS s;
   if (ts_search(tabla, $1.lexema)) {
     yyerror("Declaracion duplicada");
     return -1;
   }
   
-  ts_insert(tabla, $1.lexema, PARAMETRO, tipo_actual, clase_actual, 0, pos_parametro_actual);
+  s = ts_insert(tabla, $1.lexema, PARAMETRO, tipo_actual, ESCALAR, 0, pos_parametro_actual);
+  if (s == ERR) {
+    sprintf(err,"Clase actual: %d", clase_actual);
+    yyerror(err);
+  }
   pos_parametro_actual++;
   num_parametros_actual++;
 }
@@ -430,7 +435,7 @@ elemento_vector: TOK_IDENTIFICADOR '[' exp ']'
   $$.tipo = get_simbolo_tipo(p_s);
   $$.es_direccion = 1;
   
-  escribir_elemento_vector(yyasm, $1.lexema, MAX_TAMANIO_VECTOR, $3.es_direccion);
+  escribir_elemento_vector(yyasm, $1.lexema, tamanio_vector_actual, $3.es_direccion);
 
   fprintf(yyout, ";R48:\t<elemento_vector> ::= <identificador> [ <expr> ]\n");
 };
@@ -682,8 +687,11 @@ exp: exp '+' exp
   } else if (ambito_local) {
     escribirVariableLocal(yyasm, get_simbolo_adicional2(p_s));
   } else {
-    $$.es_direccion = 1; /* Es una variable global*/
+    $$.es_direccion = 1;
     escribir_operando(yyasm, $1.lexema, $$.es_direccion);
+    if (en_explist) {
+      operandoEnPilaAArgumento(yyasm, $$.es_direccion);
+    }
   }
 
   $$.tipo = get_simbolo_tipo(p_s);
@@ -713,6 +721,7 @@ exp: exp '+' exp
 } 
   | elemento_vector
 {
+  /* TODO: DEBEMOS METER SU VALOR NO SU DIRECCION!!!!*/
   $$.tipo = $1.tipo;
   $$.es_direccion = $1.es_direccion;
 
@@ -725,7 +734,7 @@ exp: exp '+' exp
 
   p_s = ts_search(tabla, $1.lexema);
   if (!p_s) {
-    sprintf(err, "Acceso a variable no declarada %s", $1.lexema);
+    sprintf(err, "2 Acceso a variable no declarada %s", $1.lexema);
     yyerror(err);
     return -1;
   }
@@ -936,8 +945,12 @@ identificador: TOK_IDENTIFICADOR
       return -1;
     }
 
-    s = ts_insert(tabla, $1.lexema, VARIABLE, tipo_actual, clase_actual, valor_escalar_actual, 
-                    pos_variable_local_actual);
+    if (clase_actual == VECTOR) {
+      s = ts_insert(tabla, $1.lexema, VARIABLE, tipo_actual, clase_actual, tamanio_vector_actual, pos_variable_local_actual);    
+    } else {
+      s = ts_insert(tabla, $1.lexema, VARIABLE, tipo_actual, clase_actual, valor_escalar_actual, 
+                      pos_variable_local_actual);
+    }
     if (s == ERR) {
       yyerror("Variable local de tipo no escalar");
       return -1;
