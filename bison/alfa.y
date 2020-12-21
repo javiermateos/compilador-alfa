@@ -227,6 +227,7 @@ funcion: fn_declaracion sentencias '}'
     if (!fn_return) {
       sprintf(err, "Funcion %s sin sentencia de retorno", $1.lexema);
       yyerror(err);
+      return -1;
     }
 
     fprintf(yyout, ";R22:\t<funcion> ::= <fn_declaracion> <sentencias> }\n");
@@ -258,6 +259,7 @@ fn_nombre: TOK_FUNCTION tipo TOK_IDENTIFICADOR
   s = ts_open_scope(tabla, $3.lexema, tipo_actual);
   if (s == ERR) {
     yyerror("Error sin descripcion.");
+    return -1;
   }
 
   num_variables_locales_actual = 0;
@@ -380,7 +382,15 @@ asignacion: TOK_IDENTIFICADOR '=' exp
     return -1;
   }
 
-  asignar(yyasm, $1.lexema, $3.es_direccion);
+  if (ambito_local) {
+    if(get_simbolo_categoria(p_s) == PARAMETRO) {
+      asignarDestinoEnPila(yyasm, 0);
+    } else {
+      asignarDestinoEnPila(yyasm, 1);
+    }
+  } else {
+    asignar(yyasm, $1.lexema, $3.es_direccion);
+  }
 
   fprintf(yyout, ";R43:\t<asignacion> ::= <identificador> = <exp>\n");
 } 
@@ -528,6 +538,7 @@ retorno_funcion: TOK_RETURN exp
 
   if (tipo_retorno_funcion != $2.tipo) {
     yyerror("Error sin descripcion");
+    return -1;
   }
 
   fn_return++;
@@ -666,10 +677,16 @@ exp: exp '+' exp
     return -1;
   }
 
-  $$.tipo = get_simbolo_tipo(p_s);
-  $$.es_direccion = 1; /* Es una variable */
+  if (get_simbolo_categoria(p_s) == PARAMETRO) {
+    escribirParametro(yyasm, get_simbolo_adicional2(p_s), num_parametros_llamada_actual);
+  } else if (ambito_local) {
+    escribirVariableLocal(yyasm, get_simbolo_adicional2(p_s));
+  } else {
+    $$.es_direccion = 1; /* Es una variable global*/
+    escribir_operando(yyasm, $1.lexema, $$.es_direccion);
+  }
 
-  escribir_operando(yyasm, $1.lexema, $$.es_direccion);
+  $$.tipo = get_simbolo_tipo(p_s);
 
   fprintf(yyout, ";R80:\t<exp> ::= <identificador>\n");
 } 

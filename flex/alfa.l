@@ -78,6 +78,12 @@ return  {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); return TOK_RETURN;}
 "<"         {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); return yytext[0];}
 ">"         {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); return yytext[0];}
 
+  /* Constantes */
+
+true    {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); return TOK_TRUE;}
+false   {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); return TOK_FALSE;}
+{NUMERO}    {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); yylval.atributos.valor_entero=atoi(yytext); return TOK_CONSTANTE_ENTERA;}
+
  /* Identificadores */
 {LETRA}({LETRA}|{COLA_IDENTIFICADOR})*  {
                                             if(yyleng > MAX_LONG_ID) {
@@ -92,11 +98,6 @@ return  {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); return TOK_RETURN;}
                                             return TOK_IDENTIFICADOR;
                                         }
 
- /* Constantes */
-
-true    {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); return TOK_TRUE;}
-false   {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); return TOK_FALSE;}
-{NUMERO}    {col+=yyleng; fprintf(yyout, ";D:\t%s\n", yytext); yylval.atributos.valor_entero=atoi(yytext); return TOK_CONSTANTE_ENTERA;}
 
  /* Errores */
 .   {

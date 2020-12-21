@@ -8,6 +8,8 @@ FILE* yyasm;
 
 int main(int argc, char **argv) {
 
+  int ret;
+
   if (argc < 3) {
     fprintf(stderr, "Formato: %s <file.in> <file.out> [file.debug]", argv[0]);
     exit(EXIT_FAILURE);
@@ -33,7 +35,13 @@ int main(int argc, char **argv) {
     }
   }
 
-  yyparse();
+  ret = yyparse();
+  if (ret != 0) {
+    /* Borramos el fichero asm si hay un error para que el script de
+     * compilacion no trate de compilar el archivo asm incorrecto*/
+    remove(argv[2]);
+  }
+
   fclose(yyin);
   fclose(yyasm);
   if (yyout != NULL) {
