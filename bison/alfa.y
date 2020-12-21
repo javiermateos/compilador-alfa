@@ -3,48 +3,52 @@
 /******************************************************************************/
  /* Bloque de codigo C */
 %{
-    /* Directivas include para las acciones */
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <string.h>
+  /* Directivas include para las acciones */
+  #include <stdio.h>
+  #include <stdlib.h>
+  #include <string.h>
 
-    #include "alfa.h"
-    #include "tipos.h"
-    #include "tablaSimbolos.h"
-    #include "generacion.h"
+  #include "alfa.h"
+  #include "tipos.h"
+  #include "tablaSimbolos.h"
+  #include "generacion.h"
 
-    #include "y.tab.h"
-    /* Definicion de macros */
+  #include "y.tab.h"
+  /* Definicion de macros */
 
-    /* Declaracion de variables externas*/
-    extern int row;
-    extern int col;
-    extern FILE* yyout;
-    extern FILE* yyasm;
-    extern int err_morf;
+  /* Declaracion de variables externas*/
+  extern int row;
+  extern int col;
+  extern FILE* yyout;
+  extern FILE* yyasm;
+  extern int err_morf;
 
-    /* Declaracion de variables locales */
-    TIPO tipo_actual;
-    CLASE clase_actual;
+  /* Declaracion de variables locales */
+  TIPO tipo_actual;
+  CLASE clase_actual;
 
-    int valor_escalar_actual;
-    int tamanio_vector_actual;
-    int num_variables_locales_actual;
-    int pos_variable_local_actual;
-    int num_parametros_actual;
-    int pos_parametro_actual;
-    int num_parametros_llamada_actual;
+  int valor_escalar_actual;
+  int tamanio_vector_actual;
+  int num_variables_locales_actual;
+  int pos_variable_local_actual;
+  int num_parametros_actual;
+  int pos_parametro_actual;
+  int num_parametros_llamada_actual;
 
-    tabla_simbolos* tabla;
+  tabla_simbolos* tabla;
 
-    char err[160];
+  char err[160];
 
-    int ambito_local;
-    int en_explist;
+  int ambito_local;
+  int en_explist;
+  TIPO tipo_retorno_funcion;
 
-    /* Declaracion de funciones */
-    extern int yylex();
-    void yyerror(char* s);
+  int etiqueta;
+  int fn_return;
+
+  /* Declaracion de funciones */
+  extern int yylex();
+  void yyerror(char* s);
 %}
 
 
@@ -77,6 +81,10 @@
 %type <atributos> fn_nombre
 %type <atributos> fn_declaracion
 %type <atributos> idf_llamada_funcion
+%type <atributos> if_exp
+%type <atributos> if_exp_sentencias
+%type <atributos> while_exp
+%type <atributos> while
 
  /* Definicion axioma de la gramatica */
 
@@ -140,7 +148,8 @@ escritura2: /* vacio */
 declaraciones: declaracion
 {
     fprintf(yyout, ";R2:\t<declaraciones> ::= <declaracion>\n");
-} | declaracion declaraciones
+}
+  | declaracion declaraciones
 {
     fprintf(yyout, ";R3:\t<declaraciones> ::= <declaracion> <declaraciones>\n");
 };
@@ -154,7 +163,7 @@ clase: clase_escalar
 {
     clase_actual =  ESCALAR;
     fprintf(yyout, ";R5:\t<clase> ::= <clase_escalar>\n");
-} 
+}
   | clase_vector
 {
     clase_actual = VECTOR;
@@ -190,7 +199,8 @@ clase_vector: TOK_ARRAY tipo '[' constante_entera ']'
 identificadores: identificador
 {
     fprintf(yyout, ";R18:\t<identificadores> ::= <identificador>\n");
-} | identificador ',' identificadores
+}
+  | identificador ',' identificadores
 {
     fprintf(yyout, ";R19:\t<identificadores> ::= <identificador> , <identificadores>\n");
 };
@@ -198,7 +208,8 @@ identificadores: identificador
 funciones: funcion funciones
 {
     fprintf(yyout, ";R20:\t<funciones> ::= <funcion> <funciones>\n");
-} | /* vacio */
+} 
+  | /* vacio */
 {
     fprintf(yyout, ";R21:\t<funciones> ::= \n");
 };
@@ -212,7 +223,12 @@ funcion: fn_declaracion sentencias '}'
 
     p_s = ts_search(tabla, $1.lexema);
     set_simbolo_adicional1(p_s, num_parametros_actual);
-    
+
+    if (!fn_return) {
+      sprintf(err, "Funcion %s sin sentencia de retorno", $1.lexema);
+      yyerror(err);
+    }
+
     fprintf(yyout, ";R22:\t<funcion> ::= <fn_declaracion> <sentencias> }\n");
 };
 
@@ -224,6 +240,8 @@ fn_declaracion: fn_nombre '(' parametros_funcion ')' '{' declaraciones_funcion
   set_simbolo_adicional1(p_s, num_parametros_actual);
 
   strcpy($$.lexema, $1.lexema);
+
+  declararFuncion(yyasm, $1.lexema, num_variables_locales_actual);
 
   fprintf(yyout, "R22.1:\t<fn_declaracion> ::= <fn_nombre> ( <parametros_funcion> ) { <declaraciones_funcion>\n");
 };
@@ -246,7 +264,9 @@ fn_nombre: TOK_FUNCTION tipo TOK_IDENTIFICADOR
   pos_variable_local_actual = 1;
   num_parametros_actual = 0;
   pos_parametro_actual = 0;
-  
+  fn_return = 0;
+  tipo_retorno_funcion = tipo_actual; 
+
   ambito_local = 1;
 
   strcpy($$.lexema, $3.lexema);
@@ -257,7 +277,8 @@ fn_nombre: TOK_FUNCTION tipo TOK_IDENTIFICADOR
 parametros_funcion: parametro_funcion resto_parametros_funcion
 {
     fprintf(yyout, ";R23:\t<parametros_funcion> ::= <parametro_funcion> <resto_parametros_funcion>\n");
-} | /* vacio */
+}
+  | /* vacio */
 {
     fprintf(yyout, ";R24:\t<parametros_funcion> ::= \n");
 };
@@ -265,7 +286,8 @@ parametros_funcion: parametro_funcion resto_parametros_funcion
 resto_parametros_funcion: ';' parametro_funcion resto_parametros_funcion
 {
     fprintf(yyout, ";R25:\t<resto_parametros_funcion> ::= ; <parametro_funcion> <resto_parametros_funcion>\n");
-} | /* vacio */
+}
+  | /* vacio */
 {
     fprintf(yyout, ";R26:\t<resto_parametros_funcion> ::= \n");
 };
@@ -290,7 +312,8 @@ idpf: TOK_IDENTIFICADOR
 declaraciones_funcion: declaraciones
 {
     fprintf(yyout, ";R28:\t<declaraciones_funcion> ::= <declaraciones>\n");
-} | /* vacio */
+}
+  | /* vacio */
 {
     fprintf(yyout, ";R29:\t<declaraciones_funcion> ::= \n");
 };
@@ -298,7 +321,8 @@ declaraciones_funcion: declaraciones
 sentencias: sentencia
 {
     fprintf(yyout, ";R30:\t<sentencias> ::= <sentencia>\n");
-} | sentencia sentencias
+}
+  | sentencia sentencias
 {
     fprintf(yyout, ";R31:\t<sentencias> ::= <sentencia> <sentencias>\n");
 };
@@ -306,7 +330,8 @@ sentencias: sentencia
 sentencia: sentencia_simple ';'
 {
     fprintf(yyout, ";R32:\t<sentencia> ::= <sentencia_simple> ;\n");
-} | bloque
+}
+  | bloque
 {
     fprintf(yyout, ";R33:\t<sentencia> ::= <bloque>\n");
 };
@@ -314,13 +339,16 @@ sentencia: sentencia_simple ';'
 sentencia_simple: asignacion
 {
     fprintf(yyout, ";R34:\t<sentencia_simple> ::= <asignacion>\n");
-} | lectura
+}
+| lectura
 {
     fprintf(yyout, ";R35:\t<sentencia_simple> ::= <lectura>\n");
-} | escritura
+}
+  | escritura
 {
     fprintf(yyout, ";R36:\t<sentencia_simple> ::= <escritura>\n");
-} | retorno_funcion
+}
+  | retorno_funcion
 {
     fprintf(yyout, ";R38:\t<sentencia_simple> ::= <retorno_funcion>\n");
 };
@@ -328,7 +356,8 @@ sentencia_simple: asignacion
 bloque: condicional
 {
     fprintf(yyout, ";R40:\t<bloque> ::= <condicional>\n");
-} | bucle
+}
+  | bucle
 {
     fprintf(yyout, ";R41:\t<bloque> ::= <bucle>\n");
 };
@@ -362,6 +391,8 @@ asignacion: TOK_IDENTIFICADOR '=' exp
     return -1;
   }
 
+  asignarDestinoEnPila(yyasm, $3.es_direccion);
+
   fprintf(yyout, ";R44:\t<asignacion> ::= <elemento_vector> = <exp>\n");
 };
 
@@ -389,22 +420,29 @@ elemento_vector: TOK_IDENTIFICADOR '[' exp ']'
   $$.tipo = get_simbolo_tipo(p_s);
   $$.es_direccion = 1;
   
-  /* Codigo ensamblador para comprobacion de indexacion de vectores */
+  escribir_elemento_vector(yyasm, $1.lexema, MAX_TAMANIO_VECTOR, $3.es_direccion);
+
   fprintf(yyout, ";R48:\t<elemento_vector> ::= <identificador> [ <expr> ]\n");
 };
 
 condicional: if_exp ')' '{' sentencias '}'
 {
-    fprintf(yyout, ";R50:\t<condicional> ::= if ( <exp> ) { <sentencias> }\n");
+  ifthen_fin(yyasm, $1.etiqueta);
+  
+  fprintf(yyout, ";R50:\t<condicional> ::= if ( <exp> ) { <sentencias> }\n");
 } 
-  | if_exp ')' '{' sentencias '}' TOK_ELSE '{' sentencias '}'
+  | if_exp_sentencias TOK_ELSE '{' sentencias '}'
 {
-    fprintf(yyout, ";R51:\t<condicional> ::= if ( <exp> ) { <sentencias> } else { <sentencias> }\n");
+  ifthenelse_fin(yyasm, $1.etiqueta);
+
+  fprintf(yyout, ";R51:\t<condicional> ::= if ( <exp> ) { <sentencias> } else { <sentencias> }\n");
 };
 
 bucle: while_exp ')' '{' sentencias '}'
 {
-    fprintf(yyout, ";R52:\t<bucle> ::= while ( <exp> ) { <sentencias> }\n");
+  while_fin(yyasm, $1.etiqueta);
+
+  fprintf(yyout, ";R52:\t<bucle> ::= while ( <exp> ) { <sentencias> }\n");
 };
 
 if_exp: TOK_IF '(' exp
@@ -413,14 +451,36 @@ if_exp: TOK_IF '(' exp
     yyerror("Condicional con condicion de tipo int");
     return -1;
   }
+
+  $$.etiqueta = etiqueta++;
+
+  ifthen_inicio(yyasm, $3.es_direccion, $$.etiqueta);
 }
 
-while_exp: TOK_WHILE '(' exp
+if_exp_sentencias: if_exp ')' '{' sentencias '}'
 {
-  if($3.tipo != BOOLEAN) {
+  $$.etiqueta = $1.etiqueta;
+
+  ifthenelse_fin_then(yyasm, $1.etiqueta);
+}
+
+while_exp: while exp
+{
+  if($2.tipo != BOOLEAN) {
     yyerror("Bucle con condicion de tipo int");
     return -1;
   }
+
+  $$.etiqueta = $1.etiqueta;
+  
+  while_exp_pila(yyasm, $2.es_direccion, $$.etiqueta);
+}
+
+while: TOK_WHILE '('
+{
+  $$.etiqueta = etiqueta++;
+
+  while_inicio(yyasm, $$.etiqueta);
 }
 
 lectura: TOK_SCANF TOK_IDENTIFICADOR
@@ -461,7 +521,20 @@ escritura: TOK_PRINTF exp
 
 retorno_funcion: TOK_RETURN exp
 {
-    fprintf(yyout, ";R61:\t<retorno_funcion> ::= return <exp>\n");
+  if (!ambito_local) {
+    yyerror("Sentencia de retorno fuera del cuerpo de una funcion");
+    return -1;
+  }
+
+  if (tipo_retorno_funcion != $2.tipo) {
+    yyerror("Error sin descripcion");
+  }
+
+  fn_return++;
+
+  retornarFuncion(yyasm, $2.es_direccion);
+
+  fprintf(yyout, ";R61:\t<retorno_funcion> ::= return <exp>\n");
 };
 
 exp: exp '+' exp
@@ -473,6 +546,8 @@ exp: exp '+' exp
 
   $$.tipo = ENTERO;
   $$.es_direccion = 0;
+
+  sumar(yyasm, $1.es_direccion, $3.es_direccion);  
 
   fprintf(yyout, ";R72:\t<exp> ::= <exp> + <exp>\n");
 } 
@@ -486,6 +561,8 @@ exp: exp '+' exp
   $$.tipo = ENTERO;
   $$.es_direccion = 0;
 
+  restar(yyasm, $1.es_direccion, $3.es_direccion);
+
   fprintf(yyout, ";R73:\t<exp> ::= <exp> - <exp>\n");
 } 
   | exp '/' exp
@@ -497,6 +574,8 @@ exp: exp '+' exp
 
   $$.tipo = ENTERO;
   $$.es_direccion = 0;
+
+  dividir(yyasm, $1.es_direccion, $3.es_direccion);
 
   fprintf(yyout, ";R74:\t<exp> ::= <exp> / <exp>\n");
 } 
@@ -510,6 +589,8 @@ exp: exp '+' exp
   $$.tipo = ENTERO;
   $$.es_direccion = 0;
 
+  multiplicar(yyasm, $1.es_direccion, $3.es_direccion);
+
   fprintf(yyout, ";R75:\t<exp> ::= <exp> * <exp>\n");
 } 
   | '-' exp
@@ -521,6 +602,8 @@ exp: exp '+' exp
 
   $$.tipo = ENTERO;
   $$.es_direccion = 0;
+
+  cambiar_signo(yyasm, $2.es_direccion); 
 
   fprintf(yyout, ";R76:\t<exp> ::= - <exp>\n");
 } 
@@ -534,6 +617,8 @@ exp: exp '+' exp
   $$.tipo = BOOLEAN;
   $$.es_direccion = 0;
 
+  y(yyasm, $1.es_direccion, $3.es_direccion);
+
   fprintf(yyout, ";R77:\t<exp> ::= <exp> && <exp>\n");
 }
   | exp TOK_OR exp
@@ -546,6 +631,8 @@ exp: exp '+' exp
   $$.tipo = BOOLEAN;
   $$.es_direccion = 0;
 
+  o(yyasm, $1.es_direccion, $3.es_direccion);
+
   fprintf(yyout, ";R78:\t<exp> ::= <exp> || <exp>\n");
 } 
   | TOK_NOT exp
@@ -557,6 +644,8 @@ exp: exp '+' exp
 
   $$.tipo = BOOLEAN;
   $$.es_direccion = 0;
+
+  no(yyasm, $2.es_direccion, etiqueta++); 
 
   fprintf(yyout, ";R79:\t<exp> ::= ! <exp>\n");
 } 
@@ -634,6 +723,8 @@ exp: exp '+' exp
   $$.tipo = get_simbolo_tipo(p_s);
   $$.es_direccion = 0;
 
+  llamarFuncion(yyasm, $1.lexema, num_parametros_llamada_actual);
+
   fprintf(yyout, ";R88\t<exp> ::= <identificador> ( <lista_expresiones> )\n");
 };
 
@@ -694,6 +785,8 @@ comparacion: exp TOK_IGUAL exp
   $$.tipo = BOOLEAN;
   $$.es_direccion = 0;
 
+  igual(yyasm, $1.es_direccion, $3.es_direccion, etiqueta++); 
+
   fprintf(yyout, ";R93:\t<comparacion> ::= <exp> == <exp>\n");
 } 
   | exp TOK_DISTINTO exp
@@ -705,6 +798,8 @@ comparacion: exp TOK_IGUAL exp
 
   $$.tipo = BOOLEAN;
   $$.es_direccion = 0;
+
+  distinto(yyasm, $1.es_direccion, $3.es_direccion, etiqueta++);  
 
   fprintf(yyout, ";R94:\t<comparacion> ::= <exp> != <exp>\n");
 } 
@@ -718,8 +813,10 @@ comparacion: exp TOK_IGUAL exp
   $$.tipo = BOOLEAN;
   $$.es_direccion = 0;
 
+  menor_igual(yyasm, $1.es_direccion, $3.es_direccion, etiqueta++);
+
   fprintf(yyout, "R95:\t<comparacion> ::= <exp> <= <exp>\n");
-} 
+}
   | exp TOK_MAYORIGUAL exp
 {
   if($1.tipo != ENTERO || $3.tipo != ENTERO) {
@@ -730,8 +827,10 @@ comparacion: exp TOK_IGUAL exp
   $$.tipo = BOOLEAN;
   $$.es_direccion = 0;
 
+  mayor_igual(yyasm, $1.es_direccion, $3.es_direccion, etiqueta++);
+
   fprintf(yyout, ";R96:\t<comparacion> ::= <exp> >= <exp>\n");
-} 
+}
   | exp '<' exp
 {
   if($1.tipo != ENTERO || $3.tipo != ENTERO) {
@@ -741,6 +840,8 @@ comparacion: exp TOK_IGUAL exp
 
   $$.tipo = BOOLEAN;
   $$.es_direccion = 0;
+
+  menor(yyasm, $1.es_direccion, $3.es_direccion, etiqueta++);
 
   fprintf(yyout, ";R97:\t<comparacion> ::= <exp> < <exp>\n");
 } 
@@ -753,6 +854,8 @@ comparacion: exp TOK_IGUAL exp
 
   $$.tipo = BOOLEAN;
   $$.es_direccion = 0;
+
+  mayor(yyasm, $1.es_direccion, $3.es_direccion, etiqueta++);
 
   fprintf(yyout, ";R98:\t<comparacion> ::= <exp> > <exp>\n");
 };
@@ -777,12 +880,16 @@ constante_logica: TOK_TRUE
   $$.tipo = BOOLEAN;
   $$.es_direccion = 0;
 
+  escribir_operando(yyasm, "1", 0);
+
   fprintf(yyout, ";R102\t<constante_logica> ::= true\n");
 } 
   | TOK_FALSE
 {
   $$.tipo = BOOLEAN;
   $$.es_direccion = 0;
+
+  escribir_operando(yyasm, "0", 0);
 
   fprintf(yyout, ";R103\t<constante_logica> ::= false\n");
 };

@@ -14,7 +14,7 @@ BDIR := bison
 LDIR := lib
 
 NAME := alfa
-C_NAMES  := y.tab.c lex.yy.c simbolo.c tablaHash.c tablaSimbolos.c generacion.c main.c
+C_NAMES  := y.tab.c lex.yy.c simbolo.c tablaHash.c tablaSimbolos.c generacion.c alfa.c
 
 CC := gcc
 CFLAGS := -std=c99 -g -Iinclude -pedantic -Wall -Wextra
@@ -73,8 +73,8 @@ clean:
 	rm -rfv $(NDIR) $(ODIR) $(TDIR)/compilados
 
 # Deteccion de dependencias automatica
-# CFLAGS += -MMD
-# DEPEND_FILES := $(wildcard $(ODIR)/*.d)
-# -include $(DEPEND_FILES)
+CFLAGS += -MMD
+DEPEND_FILES := $(wildcard $(ODIR)/*.d)
+-include $(DEPEND_FILES)
 
 # end

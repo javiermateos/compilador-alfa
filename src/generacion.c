@@ -44,8 +44,8 @@ void escribir_cabecera_bss(FILE *fpasm)
 void escribir_subseccion_data(FILE *fpasm)
 {
     fprintf(fpasm, "segment .data\n");
-    fprintf(fpasm, "div0_err db \"Division by 0 error\",0\n");
-    fprintf(fpasm, "ior_err db \"Index out of range\",0\n");
+    fprintf(fpasm, "div0_err db \"****Error de ejecucion: Division por 0\",0\n");
+    fprintf(fpasm, "ior_err db \"****Error de ejecucion: Indice fuera de rango\",0\n");
 }
 
 void declarar_variable(FILE *fpasm, char *nombre, int tipo, int tamano)
