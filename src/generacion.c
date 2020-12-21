@@ -558,11 +558,12 @@ void retornarFuncion(FILE *fpasm, int es_variable)
 
 void escribirParametro(FILE *fpasm, int pos_parametro, int num_total_parametros)
 {
-    fprintf(fpasm,";; escribirParametro\n");
     int posicion = 0;
 
     /* Calculo la posicion del parametro a poner en la cima de la pila */
     posicion = 4 * (1 + (num_total_parametros - pos_parametro));
+
+    fprintf(fpasm,";; escribirParametro\n");
 
     fprintf(fpasm, ";; escribirParametro\n");
 
@@ -573,11 +574,12 @@ void escribirParametro(FILE *fpasm, int pos_parametro, int num_total_parametros)
 
 void escribirVariableLocal(FILE *fpasm, int posicion_variable_local)
 {
-    fprintf(fpasm,";; escribirVariableLocal\n");
 
     int posicion = 0;
 
     posicion = 4 * posicion_variable_local;
+
+    fprintf(fpasm,";; escribirVariableLocal\n");
 
     fprintf(fpasm, "lea eax, [ebp - %d]\n", posicion);
     fprintf(fpasm, "push dword eax\n");
