@@ -50,6 +50,10 @@ STATUS ts_insert(tabla_simbolos *p_ts, const char *lexema,
     return ERR;
   }
   if (p_ts->tabla_local) {
+    /* No se pueden insertar vectores en las funciones */
+    if(cl == VECTOR) {
+      return ERR;
+    }
     ht = p_ts->tabla_local;
   } else {
     ht = p_ts->tabla_global;
@@ -88,7 +92,7 @@ simbolo* ts_search(tabla_simbolos *p_ts, const char *lexema) {
   return get_Htitem_value(ret);
 }
 
-STATUS ts_open_scope(tabla_simbolos *p_ts, const char *lexema, TIPO t, int adic1, int adic2) {
+STATUS ts_open_scope(tabla_simbolos *p_ts, const char *lexema, TIPO t) {
 
   simbolo *s = NULL;
 
@@ -105,7 +109,7 @@ STATUS ts_open_scope(tabla_simbolos *p_ts, const char *lexema, TIPO t, int adic1
     return ERR;
   }
 
-  s = crear_simbolo(lexema, FUNCION, t, ESCALAR, adic1, adic2);
+  s = crear_simbolo(lexema, FUNCION, t, ESCALAR, 0, 0);
   if (!s) {
     return ERR;
   }
@@ -117,7 +121,7 @@ STATUS ts_open_scope(tabla_simbolos *p_ts, const char *lexema, TIPO t, int adic1
     return ERR;
   }
 
-  s = crear_simbolo(lexema, FUNCION, t, ESCALAR, adic1, adic2);
+  s = crear_simbolo(lexema, FUNCION, t, ESCALAR, 0, 0);
   if (!s) {
     return ERR;
   }
@@ -137,10 +141,9 @@ STATUS ts_close_scope(tabla_simbolos *p_ts) {
     return ERR;
   }
 
-  /* No es necesario por el enunciado de la P4 */
-  /* if (!p_ts->tabla_local) { */
-  /*     return ERR; */
-  /* } */
+  if (!p_ts->tabla_local) {
+      return ERR;
+  }
 
   ht_free(p_ts->tabla_local);
   p_ts->tabla_local = NULL;

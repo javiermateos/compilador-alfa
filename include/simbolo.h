@@ -13,6 +13,8 @@ TIPO get_simbolo_tipo(simbolo* p_s);
 CLASE get_simbolo_clase(simbolo* p_s);
 int get_simbolo_adicional1(simbolo* p_s);
 int get_simbolo_adicional2(simbolo* p_s);
+void set_simbolo_adicional1(simbolo* p_s, int adic1);
+void set_simbolo_adicional2(simbolo* p_s, int adic2);
 simbolo *crear_simbolo(const char *lexema, CATEGORIA categoria, TIPO tipo,
                        CLASE clase, int adic1, int adic2);
 simbolo *copy_simbolo(simbolo* p_simbolo);

@@ -310,9 +310,12 @@ void mayor(FILE *fpasm, int es_variable1, int es_variable2, int etiqueta)
 
 /* FUNCIONES DE ESCRITURA Y LECTURA */
 
-void leer(FILE *fpasm, char *nombre, int tipo)
+void leer(FILE *fpasm, char *nombre, int tipo, int local)
 {
-    fprintf(fpasm, "push dword _%s\n", nombre);
+    if (!local) {
+      fprintf(fpasm, "push dword _%s\n", nombre);
+    }
+
     if (tipo == ENTERO)
     {
         fprintf(fpasm, "call scan_int\n");

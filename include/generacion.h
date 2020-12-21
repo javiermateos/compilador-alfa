@@ -147,7 +147,7 @@ que hay diferentes funciones de librería para la lectura (idem. escritura) de
 cada tipo. Se deben insertar en la pila los argumentos necesarios, realizar la
 llamada (call) a la función de librería correspondiente y limpiar la pila.
 */
-void leer(FILE *fpasm, char *nombre, int tipo);
+void leer(FILE *fpasm, char *nombre, int tipo, int local);
 void escribir(FILE *fpasm, int es_variable, int tipo);
 
 /* FUNCIONES MANIPULACION DE VECTORES, FUNCIONES, BLUCLES Y ESTRUCTURAS

@@ -12,33 +12,8 @@ struct s_simbolo {
   int adicional1; /* valor si escalar, longitud si vector, numero de parametros
                      si funcion */
   int adicional2; /* posicion en llamada a funcion si parametro, posicion de
-                     declaracion si variable local de funcion, numero de
-                     variables locales si funcion */
+                     declaracion si variable local de funcion */
 };
-
-char* get_simbolo_lexema(simbolo* p_s) {
-  return p_s->lexema;
-}
-
-CATEGORIA get_simbolo_categoria(simbolo* p_s) {
-  return p_s->categoria;
-}
-
-TIPO get_simbolo_tipo(simbolo* p_s) {
-  return p_s->tipo;
-}
-
-CLASE get_simbolo_clase(simbolo* p_s) {
-  return p_s->clase;
-}
-
-int get_simbolo_adicional1(simbolo* p_s) {
-  return p_s->adicional1;
-}
-
-int get_simbolo_adicional2(simbolo* p_s) {
-  return p_s->adicional2;
-}
 
 simbolo *crear_simbolo(const char *lexema, CATEGORIA categoria, TIPO tipo,
                        CLASE clase, int adic1, int adic2) {
@@ -72,6 +47,38 @@ simbolo *copy_simbolo(simbolo* p_simbolo) {
       p_simbolo->clase, p_simbolo->adicional1, p_simbolo->adicional2);
 
   return copy;
+}
+
+char* get_simbolo_lexema(simbolo* p_s) {
+  return p_s->lexema;
+}
+
+CATEGORIA get_simbolo_categoria(simbolo* p_s) {
+  return p_s->categoria;
+}
+
+TIPO get_simbolo_tipo(simbolo* p_s) {
+  return p_s->tipo;
+}
+
+CLASE get_simbolo_clase(simbolo* p_s) {
+  return p_s->clase;
+}
+
+int get_simbolo_adicional1(simbolo* p_s) {
+  return p_s->adicional1;
+}
+
+int get_simbolo_adicional2(simbolo* p_s) {
+  return p_s->adicional2;
+}
+
+void set_simbolo_adicional1(simbolo* p_s, int adic1) {
+  p_s->adicional1 = adic1;
+}
+
+void set_simbolo_adicional2(simbolo* p_s, int adic2) {
+  p_s->adicional2 = adic2;
 }
 
 void liberar_simbolo(simbolo *simbolo) {

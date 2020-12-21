@@ -14,3 +14,4 @@ esta posibilidad.
 # Recordatorios
 
 - Mirar al final del todo si se han implementado todos los mensajes de error.
+- Comprobar lo de las llamadas recursivas en funciones...........
