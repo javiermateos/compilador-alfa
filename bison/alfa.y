@@ -43,7 +43,7 @@
   int en_explist;
   TIPO tipo_retorno_funcion;
 
-  int etiqueta;
+  int etiqueta = 0;
   int fn_return;
 
   /* Declaracion de funciones */
@@ -301,17 +301,12 @@ parametro_funcion: tipo idpf
 
 idpf: TOK_IDENTIFICADOR
 {
-  STATUS s;
   if (ts_search(tabla, $1.lexema)) {
     yyerror("Declaracion duplicada");
     return -1;
   }
   
-  s = ts_insert(tabla, $1.lexema, PARAMETRO, tipo_actual, ESCALAR, 0, pos_parametro_actual);
-  if (s == ERR) {
-    sprintf(err,"Clase actual: %d", clase_actual);
-    yyerror(err);
-  }
+  ts_insert(tabla, $1.lexema, PARAMETRO, tipo_actual, ESCALAR, 0, pos_parametro_actual);
   pos_parametro_actual++;
   num_parametros_actual++;
 }
@@ -389,9 +384,10 @@ asignacion: TOK_IDENTIFICADOR '=' exp
 
   if (ambito_local) {
     if(get_simbolo_categoria(p_s) == PARAMETRO) {
-      asignarDestinoEnPila(yyasm, 0);
+      asignarDestinoEnPila(yyasm, $3.es_direccion);
     } else {
-      asignarDestinoEnPila(yyasm, 1);
+      escribirVariableLocal(yyasm, get_simbolo_adicional2(p_s));
+      asignarDestinoEnPila(yyasm, $3.es_direccion);
     }
   } else {
     asignar(yyasm, $1.lexema, $3.es_direccion);
@@ -436,6 +432,9 @@ elemento_vector: TOK_IDENTIFICADOR '[' exp ']'
   $$.es_direccion = 1;
   
   escribir_elemento_vector(yyasm, $1.lexema, tamanio_vector_actual, $3.es_direccion);
+  /* if (en_explist) { */
+  /*   operandoEnPilaAArgumento(yyasm, $$.es_direccion); */
+  /* } */
 
   fprintf(yyout, ";R48:\t<elemento_vector> ::= <identificador> [ <expr> ]\n");
 };
@@ -560,10 +559,15 @@ exp: exp '+' exp
     return -1;
   }
 
-  $$.tipo = ENTERO;
-  $$.es_direccion = 0;
+  if (en_explist) {
+    $$.es_direccion = 1;
+    sumar(yyasm, 0, 0);
+  } else {
+    $$.es_direccion = 0;
+    sumar(yyasm, $1.es_direccion, $3.es_direccion);  
+  }
 
-  sumar(yyasm, $1.es_direccion, $3.es_direccion);  
+  $$.tipo = ENTERO;
 
   fprintf(yyout, ";R72:\t<exp> ::= <exp> + <exp>\n");
 } 
@@ -574,10 +578,15 @@ exp: exp '+' exp
     return -1;
   }
 
-  $$.tipo = ENTERO;
-  $$.es_direccion = 0;
+  if (en_explist) {
+    $$.es_direccion = 1;
+    restar(yyasm, 0, 0); 
+  } else {
+    $$.es_direccion = 0;
+    restar(yyasm, $1.es_direccion, $3.es_direccion);
+  }
 
-  restar(yyasm, $1.es_direccion, $3.es_direccion);
+  $$.tipo = ENTERO;
 
   fprintf(yyout, ";R73:\t<exp> ::= <exp> - <exp>\n");
 } 
@@ -682,12 +691,12 @@ exp: exp '+' exp
     return -1;
   }
 
+  $$.es_direccion = 1;
   if (get_simbolo_categoria(p_s) == PARAMETRO) {
-    escribirParametro(yyasm, get_simbolo_adicional2(p_s), num_parametros_llamada_actual);
+    escribirParametro(yyasm, get_simbolo_adicional2(p_s), num_parametros_actual);
   } else if (ambito_local) {
     escribirVariableLocal(yyasm, get_simbolo_adicional2(p_s));
   } else {
-    $$.es_direccion = 1;
     escribir_operando(yyasm, $1.lexema, $$.es_direccion);
     if (en_explist) {
       operandoEnPilaAArgumento(yyasm, $$.es_direccion);
@@ -721,7 +730,6 @@ exp: exp '+' exp
 } 
   | elemento_vector
 {
-  /* TODO: DEBEMOS METER SU VALOR NO SU DIRECCION!!!!*/
   $$.tipo = $1.tipo;
   $$.es_direccion = $1.es_direccion;
 

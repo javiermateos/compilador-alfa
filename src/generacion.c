@@ -565,8 +565,6 @@ void escribirParametro(FILE *fpasm, int pos_parametro, int num_total_parametros)
 
     fprintf(fpasm,";; escribirParametro\n");
 
-    fprintf(fpasm, ";; escribirParametro\n");
-
     fprintf(fpasm, "lea eax, [ebp+ %d]\n", posicion);
     fprintf(fpasm, "push dword eax\n");
     fprintf(fpasm,"\n");
@@ -590,11 +588,11 @@ void asignarDestinoEnPila(FILE *fpasm, int es_varible)
 {
     fprintf(fpasm,";; asignarDestinoEnPila\n");
 
-    /* Ahora extraigo el valor */
-    obtener_operando(fpasm, es_varible);
-
     /* Primero obtengo la direccion */
     fprintf(fpasm, "pop dword edx\n");
+
+    /* Ahora extraigo el valor */
+    obtener_operando(fpasm, es_varible);
 
     fprintf(fpasm, "mov dword [edx], eax\n");
     fprintf(fpasm,"\n");
