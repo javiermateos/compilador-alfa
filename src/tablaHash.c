@@ -2,9 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "simbolo.h"
 #include "tablaHash.h"
 
+#define HASH_INI 5381
+#define HASH_FACTOR 33
 
 /* Define un elemento tipo de la tabla hash */
 struct s_Ht_item {
@@ -37,7 +38,7 @@ unsigned long hash(HashTable *Ht, const char *str) {
 /******************************************************************************/
 /* LINKED LIST                                                                */
 /******************************************************************************/
-static LinkedList *allocate_list() {
+LinkedList *allocate_list() {
   LinkedList *list = NULL;
 
   list = (LinkedList *)malloc(sizeof(LinkedList));
@@ -45,7 +46,7 @@ static LinkedList *allocate_list() {
   return list;
 }
 
-static LinkedList *linkedlist_insert(LinkedList *list, Ht_item *item) {
+LinkedList *linkedlist_insert(LinkedList *list, Ht_item *item) {
   LinkedList *node = NULL;
   LinkedList *temp = NULL;
 
@@ -68,35 +69,35 @@ static LinkedList *linkedlist_insert(LinkedList *list, Ht_item *item) {
   return list;
 }
 
-/* static Ht_item *linkedlist_remove(LinkedList *list) { */
+Ht_item *linkedlist_remove(LinkedList *list) {
 
-/*   LinkedList *node = NULL; */
-/*   LinkedList *temp = NULL; */
-/*   Ht_item *it = NULL; */
+  LinkedList *node = NULL;
+  LinkedList *temp = NULL;
+  Ht_item *it = NULL;
 
-/*   if (!list) { */
-/*     return NULL; */
-/*   } */
+  if (!list) {
+    return NULL;
+  }
 
-/*   /\* El ultimo elemento debe borrarse mediante la funcion */
-/*    * free_overflow_buckets.*\/ */
-/*   if (!list->next) { */
-/*     return NULL; */
-/*   } */
+  /* El ultimo elemento debe borrarse mediante la funcion
+   * free_overflow_buckets.*/
+  if (!list->next) {
+    return NULL;
+  }
 
-/*   node = list->next; */
-/*   temp = list; */
-/*   temp->next = NULL; */
-/*   list = node; */
+  node = list->next;
+  temp = list;
+  temp->next = NULL;
+  list = node;
 
-/*   memcpy(temp->item, it, sizeof(Ht_item)); */
-/*   free(temp->item->key); */
-/*   free(temp->item->value); */
-/*   free(temp->item); */
-/*   free(temp); */
+  memcpy(temp->item, it, sizeof(Ht_item));
+  free(temp->item->key);
+  free(temp->item->value);
+  free(temp->item);
+  free(temp);
 
-/*   return it; */
-/* } */
+  return it;
+}
 
 LinkedList* get_LinkedList_next(LinkedList *list) {
   return list->next;
@@ -121,7 +122,7 @@ static void free_linkedlist(LinkedList *list) {
 /******************************************************************************/
 /* HASH TABLE                                                                 */
 /******************************************************************************/
-static LinkedList **create_overflow_buckets(HashTable *table) {
+LinkedList **create_overflow_buckets(HashTable *table) {
   int i;
   LinkedList **buckets = NULL;
 
@@ -133,7 +134,7 @@ static LinkedList **create_overflow_buckets(HashTable *table) {
   return buckets;
 }
 
-static void free_overflow_buckets(HashTable *table) {
+void free_overflow_buckets(HashTable *table) {
   int i;
   LinkedList **buckets = NULL;
 

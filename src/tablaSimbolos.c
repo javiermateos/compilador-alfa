@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "simbolo.h"
-#include "tablaHash.h"
 #include "tablaSimbolos.h"
 
 struct s_tabla_simbolos {
@@ -50,10 +48,6 @@ STATUS ts_insert(tabla_simbolos *p_ts, const char *lexema,
     return ERR;
   }
   if (p_ts->tabla_local) {
-    /* No se pueden insertar vectores en las funciones */
-    if(cl == VECTOR) {
-      return ERR;
-    }
     ht = p_ts->tabla_local;
   } else {
     ht = p_ts->tabla_global;

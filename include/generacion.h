@@ -2,9 +2,7 @@
 #define GENERACION_H
 
 #include <stdio.h>
-#include "tipos.h"
-
-#define MAX_ETIQUETAS 256
+#include "alfa.h"
 
 /* OBSERVACIÓN GENERAL A TODAS LAS FUNCIONES:
 Todas ellas escriben el código NASM a un FILE* proporcionado como primer
@@ -38,7 +36,7 @@ del principio del fichero).
 vectores, por eso se adjunta un argumento final (tamano) que para esta
 primera práctica siempre recibirá el valor 1.
 */
-void declarar_variable(FILE *fpasm, char *nombre, int tipo, int tamano);
+void declarar_variable(FILE *fpasm, char *nombre, int tamano);
 
 /*
 Para escribir el comienzo del segmento .text, básicamente se indica que se
@@ -76,6 +74,7 @@ primer caso internamente se representará como _b1 y, sin embargo, en el
 segundo se representará tal y como esté en el argumento (34).
 */
 void escribir_operando(FILE *fpasm, char *nombre, int es_variable);
+
 /*
 - Genera el código para asignar valor a la variable de nombre nombre.
 - Se toma el valor de la cima de la pila.
@@ -273,6 +272,8 @@ void while_fin(FILE *fpasm, int etiqueta);
  */
 void escribir_elemento_vector(FILE *fpasm, char *nombre_vector, int tam_max,
                               int exp_es_direccion);
+
+void asignarElementoVector(FILE* fpasm, int es_variable);
 
 /* MANIPULACION DE FUNCIONES */
 

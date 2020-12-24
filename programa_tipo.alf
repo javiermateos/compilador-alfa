@@ -1,0 +1,31 @@
+main
+{
+  //Seccion de declaraciones variables globales
+
+  int x, y, z;
+  array int[3] vector1;
+
+  //Seccion definicion de funciones
+  
+  function int fibonacci (int num1, boolean num2)
+  {
+    // Seccion declaracion variables locales
+    int res1, res2;
+
+    //Seccion de sentencias
+    res1 = 3;
+    res2 = fibonacci(num1 -1);
+
+    //Seccion de retorno
+    return res1 + res2;
+  }
+
+  //Seccion de sentencias
+
+  vector1[0] = 10;
+
+  scanf x;
+  printf x + y;
+  printf x + y * z;
+  printf vector1[0];
+}

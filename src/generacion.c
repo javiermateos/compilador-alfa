@@ -62,7 +62,7 @@ void escribir_subseccion_data(FILE *fpasm)
     fprintf(fpasm,"\n");
 }
 
-void declarar_variable(FILE *fpasm, char *nombre, int tipo, int tamano)
+void declarar_variable(FILE *fpasm, char *nombre, int tamano)
 {
     fprintf(fpasm,";; declarar_variable\n");
 
@@ -531,6 +531,19 @@ void escribir_elemento_vector(FILE *fpasm, char *nombre_vector, int tam_max, int
     fprintf(fpasm,"\n");
 }
 
+void asignarElementoVector(FILE *fpasm, int es_variable) {
+
+    fprintf(fpasm,";; asignarElementoVector\n");
+
+    /* Primer extraigo el valor */
+    obtener_operando(fpasm, es_variable);
+
+    /* Segundo obtengo la direccion */
+    fprintf(fpasm, "pop dword edx\n");
+
+    fprintf(fpasm, "mov dword [edx], eax\n");
+    fprintf(fpasm,"\n");
+}
 
 /* MANIPULACION DE FUNCIONES */
 

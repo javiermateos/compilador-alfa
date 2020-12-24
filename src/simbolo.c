@@ -92,10 +92,3 @@ void liberar_simbolo(simbolo *simbolo) {
 
   free(simbolo);
 }
-
-
-void print_simbolo(FILE * f, simbolo *simbolo){
-  if(!f || !simbolo) return;
-
-  fprintf(f, "%s %d\n",simbolo->lexema, simbolo->adicional1);
-}
