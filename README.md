@@ -22,13 +22,9 @@ la pagina web [Mindmap Make](https://app.mindmapmaker.org/#m:new).
 
 # Instrucciones de compilacion y pruebas
 
+```sh
+make # genera el ejecutable del compilador
+make test # ejecuta todas las pruebas
 ```
-make
-make test
-cd test\compilados
-./<nombre_programa_test>
-```
-
-nota: los inputs y outputs correspondientes de los programas ejemplo se
-copian en la carpeta test/compilados y son los que terminan en _.input_ y
-_.output_.
+nota: alguno de los test muestran como diferencias lineas en blanco. Esto es
+por que alguno de los outputs tienen al final del documento una linea de más.
