@@ -61,8 +61,8 @@ test:
 clean:
 	rm -fv $(OBJECTS) $(EXE) $(DEPEND_FILES)
 	rm -fv $(SDIR)/lex.yy.c $(SDIR)/y.tab.c $(IDIR)/y.tab.h $(SDIR)/y.output
-	rm -rfv $(NDIR) $(ODIR) $(TDIR)/compilados
-	rm -fv output.txt
+	rm -rfv $(NDIR) $(ODIR)
+	rm -rfv output.txt $(TDIR)/bin
 
 # Deteccion de dependencias automatica
 CFLAGS += -MMD
