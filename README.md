@@ -1,26 +1,26 @@
 # Compilador ALFA
 
-Repositorio para realizar la practica 5 del proyecto de automatas y lenguajes, 
+Repositorio para realizar la practica 5 del proyecto de autómatas y lenguajes, 
 correspondiente al compilador completo.
 
 # Contenido del repositorio
 
 - bison : carpeta con los archivos de bison.
-- fllex : carpeta con los archivos de flex.
+- flex : carpeta con los archivos de flex.
 - include : archivos cabecera del proyecto.
-- lib : librerias complementarias del proyecto.
-- ref : archivos de referencia de teoria.
-- src : archivos de codigo fuente del proyecto.
+- lib : librerías complementarias del proyecto.
+- ref : archivos de referencia de teoría.
+- src : archivos de código fuente del proyecto.
 - test: archivos en lenguaje alfa y sus pruebas.
-- compile.sh : script de compilacion de los programas alfa.
-- Makefile : archivo con las intrucciones de compilacion del compilador.
+- compile.sh : script de compilación de los programas alfa.
+- Makefile : archivo con las instrucciones de compilación del compilador.
 - programa.json: archivo con un mapa conceptual de las reglas del compilador.
 - index.png: imagen del mapa conceptual.
 
 nota: para poder abrir y modificar el archivo _programa.json_ es necesario utilizar
 la pagina web [Mindmap Make](https://app.mindmapmaker.org/#m:new).
 
-# Instrucciones de compilacion y pruebas
+# Instrucciones de compilación y pruebas
 
 ```sh
 make # genera el ejecutable del compilador
