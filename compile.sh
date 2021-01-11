@@ -13,7 +13,7 @@ mkdir -p test/bin
 for file in $tests; do
   t_title=$(basename -s .alf $file)
   echo "*************************Salida flex para $t_title*********************" >> $flexOutput
-  echo "*************************Compilacion de $t_title***********************"
+  echo "> Compilacion de $t_title"
   ./alfa $file $NDIR/$t_title.asm $flexOutput
   echo "***********************************************************************" >> $flexOutput
   if [[ -f nasm/$t_title.asm ]]; then
@@ -40,4 +40,5 @@ for file in $tests; do
       rm -f misalida.output
     fi
   fi
+  echo ""
 done
