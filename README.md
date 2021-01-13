@@ -3,7 +3,16 @@
 Repositorio para realizar la practica 5 del proyecto de autómatas y lenguajes, 
 correspondiente al compilador completo.
 
-# Contenido del repositorio
+## Requerimientos
+
+- [Bison](https://www.gnu.org/software/bison/)
+- [Flex](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator)
+- [Make](https://www.gnu.org/software/make/)
+- [GCC](https://www.gnu.org/software/gcc/)
+- [Nasm](https://nasm.us/)
+- lib32 (32-bit libraries for C)
+
+## Contenido del repositorio
 
 - bison : carpeta con los archivos de bison.
 - flex : carpeta con los archivos de flex.
@@ -20,11 +29,9 @@ correspondiente al compilador completo.
 nota: para poder abrir y modificar el archivo _programa.json_ es necesario utilizar
 la pagina web [Mindmap Make](https://app.mindmapmaker.org/#m:new).
 
-# Instrucciones de compilación y pruebas
+## Instrucciones de compilación y pruebas
 
 ```sh
 make # genera el ejecutable del compilador
 make test # ejecuta todas las pruebas
 ```
-nota: alguno de los test muestran como diferencias lineas en blanco. Esto es
-por que alguno de los outputs tienen al final del documento una linea de más.
