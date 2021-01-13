@@ -9,6 +9,7 @@ flexOutput="output.txt"
 rm -f $flexOutput
 touch $flexOutput
 mkdir -p test/bin
+mkdir nasm
 
 for file in $tests; do
   t_title=$(basename -s .alf $file)

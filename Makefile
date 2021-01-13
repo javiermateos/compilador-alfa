@@ -55,9 +55,11 @@ $(SDIR)/y.tab.c: $(BDIR)/alfa.y
 #   TEST                                                                      #
 ###############################################################################
 test:
-	@mkdir -p $(NDIR)
-	bash compile.sh
+	bash test.sh
 
+###############################################################################
+#   MISCELLANEOUS																															#
+###############################################################################
 clean:
 	rm -fv $(OBJECTS) $(EXE) $(DEPEND_FILES)
 	rm -fv $(SDIR)/lex.yy.c $(SDIR)/y.tab.c $(IDIR)/y.tab.h $(SDIR)/y.output
