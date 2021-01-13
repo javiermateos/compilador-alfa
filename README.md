@@ -6,7 +6,7 @@ correspondiente al compilador completo.
 ## Requerimientos
 
 - [Bison](https://www.gnu.org/software/bison/)
-- [Flex](https://en.wikipedia.org/wiki/Flex_(lexical_analyser_generator)
+- [Flex](https://github.com/westes/flex)
 - [Make](https://www.gnu.org/software/make/)
 - [GCC](https://www.gnu.org/software/gcc/)
 - [Nasm](https://nasm.us/)
