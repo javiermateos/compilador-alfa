@@ -2,7 +2,7 @@
 
 Repositorio para realizar el proyecto de autómatas y lenguajes. Este proyecto consiste
 en realizar un compilador completo para el lenguaje alfa, cuya especificación se recoge
-en la carpeta [ref](./ref) en el archivo [Gramática Alfa](./GramaticaAlfa.pdf).
+en la carpeta [ref](./ref) en el archivo [Gramática Alfa](./ref/GramaticaAlfa.pdf).
 
 Además, la carpeta [ref](./ref) contiene los pdfs necesarios para la realización del
 compilador así como la información necesaria aportada por los profesores para la implementación
