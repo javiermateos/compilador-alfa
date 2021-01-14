@@ -1,7 +1,12 @@
 # Compilador ALFA
 
-Repositorio para realizar la practica 5 del proyecto de autómatas y lenguajes, 
-correspondiente al compilador completo.
+Repositorio para realizar el proyecto de autómatas y lenguajes. Este proyecto consiste
+en realizar un compilador completo para el lenguaje alfa, cuya especificación se recoge
+en la carpeta [ref](./ref) en el archivo [Gramática Alfa](./GramaticaAlfa.pdf).
+
+Además, la carpeta [ref](./ref) contiene los pdfs necesarios para la realización del
+compilador así como la información necesaria aportada por los profesores para la implementación
+del compilador.
 
 ## Requerimientos
 
@@ -35,3 +40,9 @@ la pagina web [Mindmap Make](https://app.mindmapmaker.org/#m:new).
 make # genera el ejecutable del compilador
 make test # ejecuta todas las pruebas
 ```
+
+Nota: hay dos archivos de prueba [error_ej1.alf](./test/src/error_ej1.alf) y
+[error_ej2.alf](./test/src/error_ej2.alf) que en los test producen un error.
+Esto se debe a que los errores son en tiempo de ejecución y no hay archivos
+_output_ para los mismos. Para comprobar dichos errores se deben ejecutar
+los binarios correspondientes a los mismos.
