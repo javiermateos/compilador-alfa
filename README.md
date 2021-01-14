@@ -8,6 +8,12 @@ Además, la carpeta [ref](./ref) contiene los pdfs necesarios para la realizaci�
 compilador así como la información necesaria aportada por los profesores para la implementación
 del compilador.
 
+## Autores
+
+- Adrián Sebastián Gil
+- Luis Miguel Nucifora
+- Javier Mateos Najari
+
 ## Requerimientos
 
 - [Bison](https://www.gnu.org/software/bison/)
