@@ -47,6 +47,7 @@
   int en_explist;
   TIPO tipo_retorno_funcion;
 
+  /* Contadores */
   int etiqueta;
   int fn_return;
 
