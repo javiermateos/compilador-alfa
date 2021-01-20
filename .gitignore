@@ -52,7 +52,6 @@ Mkfile.old
 dkms.conf
 
 # Project files
-/.clang-format
 /.cache/
 /alfa
 /compile_commands.json
